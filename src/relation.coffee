@@ -9,6 +9,15 @@ class Collection extends Spine.Module
   all: ->
     @model.select (rec) => @associated(rec)
 
+  fetch: (params, options = {})->
+    options.url ?= @url()
+    @model.ajax?().fetch(params, options)
+
+  url: ->
+    scope        = new @model()
+    scope[@fkey] = @record.id
+    Spine.Ajax.getCollectionURL(scope)
+
   first: ->
     @all()[0]
 
@@ -46,7 +55,7 @@ class Collection extends Spine.Module
     for record in values
       record.newRecord = false
       record[@fkey] = @record.id
-    @model.refresh values
+    @model.refresh(values)
     this
 
   create: (record, options) ->
@@ -54,10 +63,10 @@ class Collection extends Spine.Module
     @model.create(record, options)
 
   add: (record, options) ->
-    record.updateAttribute @fkey, @record.id, options
+    record.updateAttribute(@fkey, @record.id, options)
 
   remove: (record, options) ->
-    record.updateAttribute @fkey, null, options
+    record.updateAttribute(@fkey, null, options)
 
   # Private
 
@@ -135,5 +144,5 @@ Spine.Model.extend
       association(name, model, @, fkey, Singleton).update(value).find()
 
 Spine.Collection = Collection
-Spine.Singleton = Singleton
-Spine.Instance = Instance
+Spine.Singleton  = Singleton
+Spine.Instance   = Instance
