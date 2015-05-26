@@ -94,6 +94,11 @@ class Base
       # 2 reasons not to stringify: if already a string, or if intend to have ajax processData
       if typeof settings.data isnt 'string' and settings.processData isnt true
         settings.data = JSON.stringify(settings.data)
+      # allow promise callbacks to access the request's settings object
+      resolve = ->
+        deferred.resolve.apply this, [arguments..., settings]
+      reject = ->
+        deferred.reject.apply this, [arguments..., settings]
       jqXHR = $.ajax(settings)
         .done(resolve)
         .fail(reject)
@@ -152,11 +157,11 @@ class Collection extends Base
 
   # Private
 
-  recordsResponse: (data, status, xhr) =>
-    @model.trigger('ajaxSuccess', null, status, xhr)
+  recordsResponse: (data, status, xhr, settings) =>
+    @model.trigger('ajaxSuccess', null, status, xhr, settings)
 
-  failResponse: (xhr, statusText, error) =>
-    @model.trigger('ajaxError', null, xhr, statusText, error)
+  failResponse: (xhr, statusText, error, settings) =>
+    @model.trigger('ajaxError', null, xhr, statusText, error, settings)
 
 class Singleton extends Base
   constructor: (@record) ->
@@ -209,20 +214,28 @@ class Singleton extends Base
   # Private
 
   recordResponse: (options = {}) =>
-    (data, status, xhr) =>
-
+    (data, status, xhr, settings) =>
       Ajax.disable =>
         unless data is undefined or Object.getOwnPropertyNames(data).length == 0 or @record.destroyed
           # Update with latest data
           @record.refresh(data)
 
-      @record.trigger('ajaxSuccess', @record, @model.fromJSON(data), status, xhr)
+      @record.trigger('ajaxSuccess', @record, @model.fromJSON(data), status, xhr, settings)
       options.done?.apply(@record)
 
   failResponse: (options = {}) =>
-    (xhr, statusText, error) =>
-      @record.trigger('ajaxError', @record, xhr, statusText, error)
+    (xhr, statusText, error, settings) =>
+      switch settings?.type
+        when 'POST' then @createFailed()
+        when 'DELETE' then @destroyFailed()
+      @record.trigger('ajaxError', @record, xhr, statusText, error, settings)
       options.fail?.apply(@record)
+
+  createFailed: ->
+    @record.remove clear: true
+
+  destroyFailed: ->
+    @record.constructor.refresh @record
 
 # Ajax endpoint
 Model.host = ''

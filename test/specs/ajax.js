@@ -25,7 +25,7 @@ describe("Ajax", function(){
       complete: jqXHR.done
     });
   });
-  
+
   //afterEach(function() {
   //  foo = 0;
   //});
@@ -249,7 +249,7 @@ describe("Ajax", function(){
 
     var newAtts = {id: "IDD2"};
     jqXHR.resolve(newAtts);
-    
+
     var first = User.first()
     expect(first.id).toEqual("IDD2");
     expect(User.irecords["IDD2"].id).toEqual(first.id);
@@ -284,18 +284,18 @@ describe("Ajax", function(){
 
   it("should send requests serially", function(){
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
-    
+
     User.create({first: "First"});
     expect(jQuery.ajax).toHaveBeenCalled();
-    
+
     jQuery.ajax.calls.reset();
     User.create({first: "Second"});
     expect(jQuery.ajax).not.toHaveBeenCalled();
-    
+
     jqXHR.resolve();
     expect(jQuery.ajax).toHaveBeenCalled();
   });
-  
+
   it("should send GET requests in parallel by default", function() {
     //console.log('GET - parallel');
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
@@ -308,7 +308,7 @@ describe("Ajax", function(){
     expect(jQuery.ajax.calls.count()).toEqual(5);
     jQuery.ajax.calls.reset();
   });
-  
+
   it("should be able to send GET requests serially", function() {
     //console.log('GET - serially');
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
@@ -320,7 +320,7 @@ describe("Ajax", function(){
     expect(jQuery.ajax.calls.count()).toEqual(1);
     jQuery.ajax.calls.reset();
   });
-  
+
   it("should be able to send non GET requests in parallel", function() {
     //console.log('POST - parallel ');
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
@@ -329,7 +329,7 @@ describe("Ajax", function(){
     expect(jQuery.ajax.calls.count()).toEqual(2);
     jQuery.ajax.calls.reset();
   });
-  
+
   it("should return jquery promise objects", function(){
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
     User.refresh([{first: "John", last: "Williams", id: "IDD"}]);
@@ -344,7 +344,7 @@ describe("Ajax", function(){
 
   describe("the request queue that runs asyncronosly", function() {
     var user1, user2;
-    
+
     beforeEach(function(done){
       var counter = 0
       spyOn(jQuery, "ajax").and.returnValue(jqXHR);
@@ -363,13 +363,13 @@ describe("Ajax", function(){
       expect(jQuery.ajax.calls.count()).toEqual(2);
       jqXHR.resolve();
     });
-    
+
     it("should still respect promises if requests done in parallel", function(done) {
       var counter = 0, counter2 = 0;
       var promiseTimingTest = [{},{}];
       user1.first = 'firstUpdated';
       user2.first = 'secondUpdated';
-      
+
       user1.bind('ajaxSuccess', function(){
         counter++;
         promiseTimingTest[0].first = this.first;
@@ -398,10 +398,10 @@ describe("Ajax", function(){
             }, 40);
           //default:
           //  console.log(counter2);
-          
+
         }
       });
-      
+
       user1.save({parallel:true});
       user2.save({parallel:true});
       //user1.save();
@@ -409,7 +409,7 @@ describe("Ajax", function(){
       expect(jQuery.ajax.calls.count()).toEqual(4);
       jqXHR.resolve();
     });
-    
+
     afterEach(function(){
       jQuery.ajax.calls.reset();
     })
@@ -457,6 +457,22 @@ describe("Ajax", function(){
     expect(spy).toHaveBeenCalled();
   });
 
+  it("passes the request settings object into fail callbacks", function(){
+    spyOn(jQuery, "ajax").and.returnValue(jqXHR);
+    var spy = jasmine.createSpy();
+
+    User.create({first: "Second"}, {fail: spy});
+    jqXHR.reject();
+    args = spy.calls.argsFor(0);
+    debugger
+    //expect(args[3]).
+  })
+
+  it("should remove a record from model storage if POSTing it to the server fails", function(){
+    spyOn(jQuery, "ajax").and.returnValue(jqXHR);
+
+  });
+
   it("should cancel ajax on change", function() {
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
 
@@ -468,7 +484,7 @@ describe("Ajax", function(){
   it("should expose the defaults object", function(){
     expect(Spine.Ajax.defaults).toBeDefined();
   });
-  
+
   it("should not double stringify GET requests where data is a string", function(){
     spyOn(jQuery, 'ajax').and.returnValue(jqXHR);
     User.url = '/people';
@@ -485,7 +501,7 @@ describe("Ajax", function(){
       data:         "shineyHappy=true",
     });
   });
-  
+
   it("should not stringify data for GET requests where data is an object and processData is set to true", function(){
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
     User.url = "/people";
@@ -502,7 +518,7 @@ describe("Ajax", function(){
       url:          '/people',
     });
   });
-  
+
   it("should stringify data for POST requests where data gets passed as an object and processData is set as default (false)", function(){
     spyOn(jQuery, "ajax").and.returnValue(jqXHR);
     User.url = "/people";
@@ -682,7 +698,7 @@ describe("Ajax", function(){
     user.scope = function() { return "/roots/" + this.id; };
     expect(Spine.Ajax.getCollectionURL(user)).toBe('/roots/1/users');
   });
-  
+
   it("should apply scope to all urls", function(){
     Spine.Model.host = ''
     User.scope = 'foobar'
