@@ -8,6 +8,15 @@ class Collection extends Spine.Module
   all: ->
     @model.select (rec) => @associated(rec)
 
+  fetch: (params, options = {})->
+    options.url ?= @url()
+    @model.ajax?().fetch(params, options)
+
+  url: ->
+    scope        = new @model()
+    scope[@fkey] = @record.id
+    Spine.Ajax.getCollectionURL(scope)
+
   first: ->
     @all()[0]
 
@@ -45,7 +54,7 @@ class Collection extends Spine.Module
     for record in values
       record.newRecord = false
       record[@fkey] = @record.id
-    @model.refresh values
+    @model.refresh(values)
     this
 
   create: (record, options) ->
@@ -53,10 +62,10 @@ class Collection extends Spine.Module
     @model.create(record, options)
 
   add: (record, options) ->
-    record.updateAttribute @fkey, @record.id, options
+    record.updateAttribute(@fkey, @record.id, options)
 
   remove: (record, options) ->
-    record.updateAttribute @fkey, null, options
+    record.updateAttribute(@fkey, null, options)
 
   # Private
 
@@ -73,9 +82,7 @@ class Instance extends Spine.Module
 
   update: (value) ->
     return this unless value?
-    unless value instanceof @model
-      value = new @model(value)
-    value.save() if value.isNew()
+    value = @model.refresh(value)[0]
     @record[@fkey] = value and value.id
     this
 
@@ -89,11 +96,8 @@ class Singleton extends Spine.Module
 
   update: (value) ->
     return this unless value?
-    unless value instanceof @model
-      value = @model.fromJSON(value)
-
     value[@fkey] = @record.id
-    value.save()
+    @model.refresh(value)
     this
 
 singularize = (str) ->
@@ -101,10 +105,10 @@ singularize = (str) ->
 
 underscore = (str) ->
   str.replace(/::/g, '/')
-     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
-     .replace(/([a-z\d])([A-Z])/g, '$1_$2')
-     .replace(/(-|\.)/g, '_')
-     .toLowerCase()
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .replace(/(-|\.)/g, '_')
+    .toLowerCase()
 
 requireModel = (model) ->
   if typeof model is 'string'
@@ -134,5 +138,5 @@ Spine.Model.extend
       association(name, model, @, fkey, Singleton).update(value).find()
 
 Spine.Collection = Collection
-Spine.Singleton = Singleton
-Spine.Instance = Instance
+Spine.Singleton  = Singleton
+Spine.Instance   = Instance
