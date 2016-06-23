@@ -86,6 +86,7 @@ describe("Model", function(){
     var customfallback = function(id){
       sessionStorage.fallbackRan = true
       sessionStorage.fallbackReceivedId = id
+      expect(this).toEqual(Asset);
       return Asset.create({name: 'test2.pdf', id:id})
     };
     var foundAsset = Asset.find(asset.id, customfallback);
@@ -99,6 +100,7 @@ describe("Model", function(){
     Asset.notFound = function(id){
       sessionStorage.fallback2Ran = true
       sessionStorage.fallback2ReceivedId = id
+      expect(this).toEqual(Asset);
       return Asset.create({name: 'test3.pdf'})
     };
     var foundAsset2 = Asset.find(asset.id);
@@ -286,7 +288,6 @@ describe("Model", function(){
 
   it("can preprocess json before it is deserialized", function(){
     Asset.beforeFromJSON = function(objects){
-      console.log(objects.data);
       return objects.data;
     }
 
@@ -951,7 +952,6 @@ describe("Model", function(){
     it("should invoke callbacks in the context of the class", function(){
       Asset.on("create update destroy change save error custom", function(item){
         expect(this).toEqual(Asset);
-        //console.log('item', item);
       });
       var asset = Asset.create({name: "screaming goats.png"});
       asset.updateAttribute("name", "more screaming goats.png");
