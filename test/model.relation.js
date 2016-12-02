@@ -216,7 +216,7 @@ describe("Model.Relation", function(){
     expect( album.photos().last().name ).toBe("Beautiful photo 2");
   });
 
-  it("can refresh Collection records without effecting unrelated model records", function(){
+  it("can refresh Collection records without affecting unrelated model records", function(){
     Album.hasMany("photos", Photo);
     Photo.belongsTo("album", Album);
 
@@ -257,6 +257,41 @@ describe("Model.Relation", function(){
     expect( album.photos().last().album_id ).toBe("2");
     expect( album.photos().first().name ).toBe("Beautiful photo 1");
     expect( album.photos().last().name ).toBe("Beautiful photo 2");
+  });
+
+  it("can refresh Collection records without replacing their root prototype object in model storage", function(){
+    Album.hasMany("photos", Photo);
+    Photo.belongsTo("album", Album);
+
+    var album = Album.create({
+      name: "Beautiful album",
+      id: "2",
+      photos: [{
+        id: "1",
+        name: "Beautiful photo 1"
+      }]
+    });
+
+    var photo1Root = Photo.irecords['1'];
+    expect( album.photos().first().__proto__ ).toBe(photo1Root);
+
+    var photo1 = {
+      id: "1",
+      name: "Beautiful photo 1 - refreshed"
+    }
+    var photo2 = {
+      id: "2",
+      name: "Beautiful photo 2"
+    }
+
+    album.photos([ photo1, photo2 ]);
+
+    expect( album.photos().count() ).toBe(2);
+    expect( album.photos().first().album_id ).toBe("2");
+    expect( album.photos().last().album_id ).toBe("2");
+    expect( album.photos().first().name ).toBe("Beautiful photo 1 - refreshed");
+    expect( album.photos().last().name ).toBe("Beautiful photo 2");
+    expect( album.photos().first().__proto__ ).toBe(photo1Root);
   });
 
   it("can add unassociated records to an existing Collection", function(){

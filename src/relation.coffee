@@ -28,7 +28,7 @@ class Collection extends Spine.Module
     @all().length
 
   find: (id, notFound = @model.notFound) ->
-    records = @select (rec) =>
+    records = @select (rec) ->
       "#{rec.id}" is "#{id}"
     return records[0] or notFound?(id)
 
@@ -45,12 +45,13 @@ class Collection extends Spine.Module
 
   refresh: (values) ->
     return this unless values?
-    for record in @all()
+    values = [values] unless Array.isArray(values)
+    refreshedIds = values.map (value)-> value.id
+    for record in @all() when record.id not in refreshedIds
       delete @model.irecords[record.id]
       for match, i in @model.records when match.id is record.id
         @model.records.splice(i, 1)
         break
-    values = [values] unless Array.isArray(values)
     for record in values
       record.newRecord = false
       record[@fkey] = @record.id
