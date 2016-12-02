@@ -86,6 +86,7 @@ describe("Model", function(){
     var customfallback = function(id){
       sessionStorage.fallbackRan = true
       sessionStorage.fallbackReceivedId = id
+      expect(this).toEqual(Asset);
       return Asset.create({name: 'test2.pdf', id:id})
     };
     var foundAsset = Asset.find(asset.id, customfallback);
@@ -99,6 +100,7 @@ describe("Model", function(){
     Asset.notFound = function(id){
       sessionStorage.fallback2Ran = true
       sessionStorage.fallback2ReceivedId = id
+      expect(this).toEqual(Asset);
       return Asset.create({name: 'test3.pdf'})
     };
     var foundAsset2 = Asset.find(asset.id);
@@ -286,7 +288,6 @@ describe("Model", function(){
 
   it("can preprocess json before it is deserialized", function(){
     Asset.beforeFromJSON = function(objects){
-      console.log(objects.data);
       return objects.data;
     }
 
@@ -719,7 +720,7 @@ describe("Model", function(){
     it("can unbind all events", function(){
       var asset = Asset.create({name: "cartoon world.png"});
       asset.on("save", spy);
-      asset.unbind();
+      asset.off();
       asset.save();
       expect(spy).not.toHaveBeenCalled();
     });
@@ -728,7 +729,7 @@ describe("Model", function(){
       var asset = Asset.create({name: "cartoon world.png"});
       asset.on("save", spy);
       asset.on("customEvent", spy);
-      asset.unbind('save');
+      asset.off('save');
       asset.save();
       expect(spy).not.toHaveBeenCalled();
       asset.trigger('customEvent');
@@ -747,7 +748,7 @@ describe("Model", function(){
       expect(spy2).toHaveBeenCalled();
       spy.calls.reset();
       spy2.calls.reset();
-      asset.unbind("customEvent", spy2);
+      asset.off("customEvent", spy2);
       asset.trigger('customEvent');
       expect(spy).toHaveBeenCalled();
       expect(spy2).not.toHaveBeenCalled();
@@ -760,7 +761,7 @@ describe("Model", function(){
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(2);
       spy.calls.reset();
-      asset.unbind("customEvent1");
+      asset.off("customEvent1");
       asset.trigger("customEvent1");
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(1);
@@ -773,7 +774,7 @@ describe("Model", function(){
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(2);
       spy.calls.reset();
-      asset.unbind("customEvent1 customEvent2")
+      asset.off("customEvent1 customEvent2")
       asset.trigger("customEvent1");
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(0);
@@ -795,7 +796,7 @@ describe("Model", function(){
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(2);
       spy.calls.reset();
-      asset.unbind();
+      asset.off();
       asset.trigger("customEvent1");
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(0);
@@ -808,7 +809,7 @@ describe("Model", function(){
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(2);
       spy.calls.reset();
-      asset.unbind(undefined);
+      asset.off(undefined);
       asset.trigger("customEvent1");
       asset.trigger("customEvent2");
       expect(spy.calls.count()).toEqual(2);
@@ -951,7 +952,6 @@ describe("Model", function(){
     it("should invoke callbacks in the context of the class", function(){
       Asset.on("create update destroy change save error custom", function(item){
         expect(this).toEqual(Asset);
-        //console.log('item', item);
       });
       var asset = Asset.create({name: "screaming goats.png"});
       asset.updateAttribute("name", "more screaming goats.png");

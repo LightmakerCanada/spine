@@ -18,7 +18,7 @@ describe("Routing", function(){
   });
 
   afterEach(function(){
-    Route.unbind();
+    Route.off();
     Route.routers = [];
     Route.router = new Route();
     delete Route.path;
@@ -37,7 +37,6 @@ describe("Routing", function(){
   it("can get the host", function(){
     host = Route.getHost();
     expect(host).not.toBeNull();
-    //console.log('result of getHost()', host)
   });
 
 
@@ -224,7 +223,6 @@ describe("Routing", function(){
         //  expect(arguments[0].trigger).toBe(true);
         //  expect(Route.options.trigger).toBe(true);
         //  expect(routeSpy).not.toHaveBeenCalled();
-        //  console.log(arguments, 'done');
         //  done();
         //}});
         Route.navigate('/losers', false);
@@ -250,13 +248,12 @@ describe("Routing", function(){
     it("should have bound 'hashchange' event to window", function(){
       // $(window).data('events') was the way to get events before jquery 1.8
       var events = $(window).data('events') || $._data(window, 'events');
-      console.log(events)
       expect(events).toBeDefined();
       expect('hashchange' in events).toBe(true);
     });
 
     it("should unbind", function(){
-      Route.unbind();
+      Route.off();
       //var events = $(window).data('events') || $._data(window, 'events');
       var events = $(window).data('events') || {};
 
@@ -307,7 +304,7 @@ describe("Routing", function(){
     });
 
     it("should unbind", function(){
-      Route.unbind();
+      Route.off();
       //var events = $(window).data('events') || $._data(window, 'events');
       var events = $(window).data('events') || {};
 
@@ -316,8 +313,8 @@ describe("Routing", function(){
     });
 
     it("should unbind single listeners", function(){
-      Route.bind('navigate', spy);
-      Route.unbind('navigate', spy);
+      Route.on('navigate', spy);
+      Route.off('navigate', spy);
 
       // make sure our listener got unbound
       Route.trigger('navigate');
