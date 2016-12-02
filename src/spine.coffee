@@ -330,6 +330,23 @@ class Model extends Module
     result.id = @id if @id
     result
 
+  changes: ->
+    changed = false
+    changes =
+      before: {}
+      after: {}
+    return if this is @root()
+    for key in @constructor.attributes
+      continue unless @hasOwnProperty(key)
+      continue if typeof @[key] is 'function'
+      continue if @root()[key]? and
+        JSON.stringify(@root()[key]) is JSON.stringify(@[key])
+      changed = true
+      changes.before[key] = @root()[key]
+      changes.after[key] = @[key]
+    return unless changed
+    changes
+
   eql: (rec) ->
     rec and rec.constructor is @constructor and
       ((rec.cid is @cid) or (rec.id and rec.id is @id))
@@ -418,10 +435,14 @@ class Model extends Module
     # ID change, need to do some shifting
     if atts.id and @id isnt atts.id
       @changeID(atts.id)
-    # go to the source and load attributes
-    @constructor.irecords[@id].load(atts)
+    # populate clone to find changes
+    clone = if this is @root() then @clone() else this
+    clone.load(atts)
+    changes = clone.changes()
+    # load new attributes into root record
+    @root().load(atts)
     @trigger('refresh', this)
-    @trigger('change', this, 'refresh')
+    @trigger('change', this, 'refresh', {changes}) if changes
     this
 
   toJSON: ->
@@ -451,17 +472,21 @@ class Model extends Module
 
   # Private
 
-  update: (options) ->
+  root: ->
+    @constructor.irecords[@id]
+
+  update: (options = {}) ->
     @trigger('beforeUpdate', this, options)
 
-    records = @constructor.irecords
-    records[@id].load @attributes()
-
+    changes = @changes()
+    @root().load(@attributes())
     @constructor.sort()
 
-    clone = records[@id].clone()
+    clone = @root().clone()
     clone.trigger('update', clone, options)
-    clone.trigger('change', clone, 'update', options)
+    if changes
+      options.changes = changes
+      clone.trigger('change', clone, 'update', options)
     clone
 
   create: (options) ->
@@ -469,7 +494,7 @@ class Model extends Module
     @id or= @cid
 
     record = @dup(false)
-    @constructor.addRecord(record,options.idx)
+    @constructor.addRecord(record, options.idx)
     @constructor.sort()
 
     clone = record.clone()
@@ -478,15 +503,15 @@ class Model extends Module
     clone
 
   on: ->
-    record = @constructor.irecords[@id] or this
+    record = @root() or this
     Events.on.apply record, arguments
 
   one: ->
-    record = @constructor.irecords[@id] or this
+    record = @root() or this
     Events.one.apply record, arguments
 
   off: ->
-    record = @constructor.irecords[@id] or this
+    record = @root() or this
     Events.off.apply record, arguments
 
   trigger: ->
