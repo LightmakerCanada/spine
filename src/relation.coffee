@@ -113,7 +113,7 @@ underscore = (str) ->
 
 requireModel = (model) ->
   if typeof model is 'string'
-    require?(model) or eval(model)
+    throw new Error 'passing model as a string is deprecated'
   else
     model
 
