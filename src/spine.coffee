@@ -546,7 +546,7 @@ class Controller extends Module
     @elements = @constructor.elements unless @elements
 
     context = @
-    while parent_prototype = context.constructor.__super__
+    while parent_prototype = context.__proto__
       @events = $.extend({}, parent_prototype.events, @events) if parent_prototype.events
       @elements = $.extend({}, parent_prototype.elements, @elements) if parent_prototype.elements
       context = parent_prototype
