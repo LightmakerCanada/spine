@@ -124,17 +124,19 @@ association = (name, model, record, fkey, Ctor) ->
 Spine.Model.extend
   hasMany: (name, model, fkey) ->
     fkey ?= "#{underscore(this.className)}_id"
+    model.attributes.push(fkey)
     @::[name] = (value) ->
       association(name, model, @, fkey, Collection).refresh(value)
 
   belongsTo: (name, model, fkey) ->
     fkey ?= "#{underscore(singularize(name))}_id"
+    @attributes.push(fkey)
     @::[name] = (value) ->
       association(name, model, @, fkey, Instance).update(value).find()
-    @attributes.push(fkey)
 
   hasOne: (name, model, fkey) ->
     fkey ?= "#{underscore(@className)}_id"
+    model.attributes.push(fkey)
     @::[name] = (value) ->
       association(name, model, @, fkey, Singleton).update(value).find()
 
