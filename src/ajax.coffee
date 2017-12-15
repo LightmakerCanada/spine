@@ -74,10 +74,12 @@ class Base
 
   queue: Ajax.queue
 
-  ajax: (params, defaults) ->
-    $.ajax @ajaxSettings(params, defaults)
+  ajax: (params, defaults, retry) ->
+    jqXHR = $.ajax @ajaxSettings(params, defaults)
+    jqXHR = jqXHR.retry(retry) if retry and typeof jqXHR.retry is 'function'
+    jqXHR
 
-  ajaxQueue: (params, defaults, record) ->
+  ajaxQueue: (params, defaults, record, retry) ->
     jqXHR    = null
     deferred = $.Deferred()
     promise  = deferred.promise()
@@ -100,6 +102,7 @@ class Base
       reject = ->
         deferred.reject.apply this, [arguments..., settings]
       jqXHR = $.ajax(settings)
+      jqXHR = jqXHR.retry(retry) if retry and typeof jqXHR.retry is 'function'
       jqXHR.done(resolve)
       jqXHR.fail(reject)
       jqXHR.then(next, next)
@@ -127,22 +130,24 @@ class Collection extends Base
 
   find: (id, params, options = {}) ->
     record = new @model(id: id)
+    retry = options.retry or @model.ajaxRetry
     @ajaxQueue(
       params, {
         type: options.method or Ajax.config.loadMethod
         url: options.url or Ajax.getURL(record)
         parallel: options.parallel
-      }
+      }, null, retry
     ).done(@recordsResponse(options))
       .fail(@failResponse(options))
 
   all: (params, options = {}) ->
+    retry = options.retry or @model.ajaxRetry
     @ajaxQueue(
       params, {
         type: options.method or Ajax.config.loadMethod
         url: options.url or Ajax.getURL(@model)
         parallel: options.parallel
-      }
+      }, null, retry
     ).done(@recordsResponse(options))
       .fail(@failResponse(options))
 
@@ -172,16 +177,18 @@ class Singleton extends Base
     @model = @record.constructor
 
   reload: (params, options = {}) ->
+    retry = options.retry or @model.ajaxRetry
     @ajaxQueue(
       params, {
         type: options.method or Ajax.config.loadMethod
         url: options.url
         parallel: options.parallel
-      }, @record
+      }, @record, retry
     ).done(@recordResponse(options))
       .fail(@failResponse(options))
 
   create: (params, options = {}) ->
+    retry = options.retry or @model.ajaxRetry
     @ajaxQueue(
       params, {
         type: options.method or Ajax.config.createMethod
@@ -189,11 +196,12 @@ class Singleton extends Base
         data: @record.toJSON()
         url: options.url or Ajax.getCollectionURL(@record)
         parallel: options.parallel
-      }
+      }, null, retry
     ).done(@recordResponse(options))
       .fail(@failResponse(options))
 
   update: (params, options = {}) ->
+    retry = options.retry or @model.ajaxRetry
     @ajaxQueue(
       params, {
         type: options.method or Ajax.config.updateMethod
@@ -201,17 +209,18 @@ class Singleton extends Base
         data: @record.toJSON()
         url: options.url
         parallel: options.parallel
-      }, @record
+      }, @record, retry
     ).done(@recordResponse(options))
       .fail(@failResponse(options))
 
   destroy: (params, options = {}) ->
+    retry = options.retry or @model.ajaxRetry
     @ajaxQueue(
       params, {
         type: options.method or Ajax.config.destroyMethod
         url: options.url
         parallel: options.parallel
-      }, @record
+      }, @record, retry
     ).done(@recordResponse(options))
       .fail(@failResponse(options))
 
