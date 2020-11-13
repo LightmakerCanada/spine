@@ -27,7 +27,7 @@ Events =
 
   listenTo: (obj, ev, callback) ->
     if callback is undefined
-      throw new Error("The callback passed to `@listenTo #{obj.className}, `'#{ev}`'` is undefined.")
+      throw new Error("The callback passed to `@listenTo #{obj.className}, '#{ev}'` is undefined.")
     obj.on(ev, callback)
     @listeningTo or= []
     @listeningTo.push {obj, ev, callback}
